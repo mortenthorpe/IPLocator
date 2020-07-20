@@ -1,0 +1,7 @@
+.idea
+.idea/*
+.DS_Store
+.env
+vendor
+bin
+bin/*
