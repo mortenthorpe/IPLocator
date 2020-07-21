@@ -77,6 +77,8 @@
     </parameter>
     <parameter key="session.save_path">/Users/mortenthorpe/symfIPBlocker/ipBlocker/var/cache/dev/sessions</parameter>
     <parameter key="session.metadata.update_threshold">0</parameter>
+    <parameter key="validator.mapping.cache.file">/Users/mortenthorpe/symfIPBlocker/ipBlocker/var/cache/dev/validation.php</parameter>
+    <parameter key="validator.translation_domain">validators</parameter>
     <parameter key="data_collector.templates" type="collection"/>
     <parameter key="debug.error_handler.throw_at">-1</parameter>
     <parameter key="debug.container.dump">/Users/mortenthorpe/symfIPBlocker/ipBlocker/var/cache/dev/App_KernelDevDebugContainer.xml</parameter>
@@ -129,6 +131,16 @@
       <argument>%ip_api%</argument>
       <factory class="App\Model\Factory\IpApiProviderFactory" method="create"/>
     </service>
+    <service id="app.http.client" class="GuzzleHttp\Client" public="false" autowire="true" autoconfigure="true"/>
+    <service id="Monolog\Processor\PsrLogMessageProcessor" class="Monolog\Processor\PsrLogMessageProcessor" public="false" autowire="true" autoconfigure="true">
+      <tag name="monolog.processor"/>
+    </service>
+    <service id="Monolog\Processor\WebProcessor" class="Monolog\Processor\WebProcessor" public="false" autowire="true" autoconfigure="true">
+      <tag name="monolog.processor"/>
+    </service>
+    <service id="Monolog\Processor\MemoryUsageProcessor" class="Monolog\Processor\MemoryUsageProcessor" public="false" autowire="true" autoconfigure="true">
+      <tag name="monolog.processor"/>
+    </service>
     <service id="controller_resolver" class="Symfony\Bundle\FrameworkBundle\Controller\ControllerResolver" public="false">
       <tag name="monolog.logger" channel="request"/>
       <argument type="service" id="service_container"/>
@@ -157,7 +169,7 @@
     </service>
     <service id="argument_resolver.service" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\ServiceValueResolver" public="false">
       <tag name="controller.argument_value_resolver" priority="-50"/>
-      <argument type="service" id=".service_locator.jB4gYzr"/>
+      <argument type="service" id=".service_locator.uwP1Wnc"/>
     </service>
     <service id="argument_resolver.default" class="Symfony\Component\HttpKernel\Controller\ArgumentResolver\DefaultValueResolver" public="false">
       <tag name="controller.argument_value_resolver" priority="-100"/>
@@ -297,6 +309,22 @@
           <argument>removeCspHeader</argument>
         </argument>
         <argument>-128</argument>
+      </call>
+      <call method="addListener">
+        <argument>kernel.request</argument>
+        <argument type="collection">
+          <argument type="service" id="locale_aware_listener"/>
+          <argument>onKernelRequest</argument>
+        </argument>
+        <argument>15</argument>
+      </call>
+      <call method="addListener">
+        <argument>kernel.finish_request</argument>
+        <argument type="collection">
+          <argument type="service" id="locale_aware_listener"/>
+          <argument>onKernelFinishRequest</argument>
+        </argument>
+        <argument>-15</argument>
       </call>
       <call method="addListener">
         <argument>console.error</argument>
@@ -499,12 +527,24 @@
       <argument type="service" id="service_container"/>
       <argument type="service" id=".service_locator.hbcatdF"/>
     </service>
+    <service id="locale_aware_listener" class="Symfony\Component\HttpKernel\EventListener\LocaleAwareListener" public="false">
+      <tag name="kernel.event_subscriber"/>
+      <tag name="container.hot_path"/>
+      <tag name="container.hot_path"/>
+      <argument type="iterator">
+        <argument type="service" id="slugger"/>
+      </argument>
+      <argument type="service" id="request_stack"/>
+    </service>
     <service id="container.env_var_processor" class="Symfony\Component\DependencyInjection\EnvVarProcessor" public="false">
       <tag name="container.env_var_processor"/>
       <argument type="service" id="service_container"/>
       <argument type="tagged_iterator" tag="container.env_var_loader"/>
     </service>
-    <service id="slugger" class="stdClass"/>
+    <service id="slugger" class="Symfony\Component\String\Slugger\AsciiSlugger" public="false">
+      <tag name="kernel.locale_aware"/>
+      <argument>en</argument>
+    </service>
     <service id="container.getenv" class="Closure" public="false">
       <tag name="routing.expression_language_function" function="env"/>
       <argument type="collection">
@@ -1006,6 +1046,54 @@
       <argument>true</argument>
     </service>
     <service id="session.marshaller" class="Symfony\Component\HttpFoundation\Session\Storage\Handler\IdentityMarshaller" public="false"/>
+    <service id="validator" class="Symfony\Component\Validator\Validator\ValidatorInterface" public="true">
+      <factory service="validator.builder" method="getValidator"/>
+    </service>
+    <service id="validator.builder" class="Symfony\Component\Validator\ValidatorBuilder" public="false">
+      <call method="setConstraintValidatorFactory">
+        <argument type="service" id="validator.validator_factory"/>
+      </call>
+      <call method="setTranslationDomain">
+        <argument>validators</argument>
+      </call>
+      <call method="enableAnnotationMapping">
+        <argument type="service" id="annotations.reader"/>
+      </call>
+      <call method="addMethodMapping">
+        <argument>loadValidatorMetadata</argument>
+      </call>
+      <call method="addObjectInitializers">
+        <argument type="collection"/>
+      </call>
+      <factory class="Symfony\Component\Validator\Validation" method="createValidatorBuilder"/>
+    </service>
+    <service id="validator.mapping.cache_warmer" class="Symfony\Bundle\FrameworkBundle\CacheWarmer\ValidatorCacheWarmer" public="false">
+      <tag name="kernel.cache_warmer"/>
+      <argument type="service" id="validator.builder"/>
+      <argument>/Users/mortenthorpe/symfIPBlocker/ipBlocker/var/cache/dev/validation.php</argument>
+    </service>
+    <service id="validator.mapping.cache.adapter" class="Symfony\Component\Cache\Adapter\PhpArrayAdapter" public="false">
+      <argument>/Users/mortenthorpe/symfIPBlocker/ipBlocker/var/cache/dev/validation.php</argument>
+      <argument type="service" id="cache.validator"/>
+      <factory class="Symfony\Component\Cache\Adapter\PhpArrayAdapter" method="create"/>
+    </service>
+    <service id="validator.validator_factory" class="Symfony\Component\Validator\ContainerConstraintValidatorFactory" public="false">
+      <argument type="service" id=".service_locator.I1s6iy_"/>
+    </service>
+    <service id="validator.expression" class="Symfony\Component\Validator\Constraints\ExpressionValidator" public="false">
+      <tag name="validator.constraint_validator" alias="validator.expression"/>
+    </service>
+    <service id="validator.email" class="Symfony\Component\Validator\Constraints\EmailValidator" public="false">
+      <tag name="validator.constraint_validator" alias="Symfony\Component\Validator\Constraints\EmailValidator"/>
+      <argument>html5</argument>
+    </service>
+    <service id="validator.not_compromised_password" class="Symfony\Component\Validator\Constraints\NotCompromisedPasswordValidator" public="false">
+      <tag name="validator.constraint_validator" alias="Symfony\Component\Validator\Constraints\NotCompromisedPasswordValidator"/>
+      <argument>null</argument>
+      <argument>UTF-8</argument>
+      <argument>true</argument>
+      <argument>null</argument>
+    </service>
     <service id="debug.debug_handlers_listener" class="Symfony\Component\HttpKernel\EventListener\DebugHandlersListener" public="false">
       <tag name="kernel.event_subscriber"/>
       <tag name="monolog.logger" channel="php"/>
@@ -1205,6 +1293,15 @@
     </service>
     <service id="monolog.logger" class="Symfony\Bridge\Monolog\Logger" public="false">
       <argument>app</argument>
+      <call method="pushProcessor">
+        <argument type="service" id="Monolog\Processor\PsrLogMessageProcessor"/>
+      </call>
+      <call method="pushProcessor">
+        <argument type="service" id="Monolog\Processor\WebProcessor"/>
+      </call>
+      <call method="pushProcessor">
+        <argument type="service" id="Monolog\Processor\MemoryUsageProcessor"/>
+      </call>
       <call method="useMicrosecondTimestamps">
         <argument>true</argument>
       </call>
@@ -1217,6 +1314,15 @@
     </service>
     <service id="monolog.logger_prototype" class="Symfony\Bridge\Monolog\Logger" abstract="true">
       <argument></argument>
+      <call method="pushProcessor">
+        <argument type="service" id="Monolog\Processor\PsrLogMessageProcessor"/>
+      </call>
+      <call method="pushProcessor">
+        <argument type="service" id="Monolog\Processor\WebProcessor"/>
+      </call>
+      <call method="pushProcessor">
+        <argument type="service" id="Monolog\Processor\MemoryUsageProcessor"/>
+      </call>
     </service>
     <service id="monolog.activation_strategy.not_found" class="Symfony\Bridge\Monolog\Handler\FingersCrossed\NotFoundActivationStrategy" abstract="true"/>
     <service id="monolog.handler.fingers_crossed.error_level_activation_strategy" class="Monolog\Handler\FingersCrossed\ErrorLevelActivationStrategy" abstract="true"/>
@@ -1395,6 +1501,12 @@
     <service id=".instanceof.Symfony\Contracts\Service\ServiceSubscriberInterface.0.App\Controller\DefaultController" class="App\Controller\DefaultController" public="false" autowire="true" abstract="true"/>
     <service id=".instanceof.Symfony\Bundle\FrameworkBundle\Controller\AbstractController.0.App\Controller\DefaultController" class="App\Controller\DefaultController" public="false" autowire="true" abstract="true"/>
     <service id=".abstract.instanceof.App\Controller\DefaultController" class="App\Controller\DefaultController" public="false" autowire="true" autoconfigure="true" abstract="true"/>
+    <service id=".instanceof.Monolog\Processor\ProcessorInterface.0.Monolog\Processor\PsrLogMessageProcessor" class="Monolog\Processor\PsrLogMessageProcessor" public="false" autowire="true" abstract="true"/>
+    <service id=".abstract.instanceof.Monolog\Processor\PsrLogMessageProcessor" class="Monolog\Processor\PsrLogMessageProcessor" public="false" autowire="true" autoconfigure="true" abstract="true"/>
+    <service id=".instanceof.Monolog\Processor\ProcessorInterface.0.Monolog\Processor\WebProcessor" class="Monolog\Processor\WebProcessor" public="false" autowire="true" abstract="true"/>
+    <service id=".abstract.instanceof.Monolog\Processor\WebProcessor" class="Monolog\Processor\WebProcessor" public="false" autowire="true" autoconfigure="true" abstract="true"/>
+    <service id=".instanceof.Monolog\Processor\ProcessorInterface.0.Monolog\Processor\MemoryUsageProcessor" class="Monolog\Processor\MemoryUsageProcessor" public="false" autowire="true" abstract="true"/>
+    <service id=".abstract.instanceof.Monolog\Processor\MemoryUsageProcessor" class="Monolog\Processor\MemoryUsageProcessor" public="false" autowire="true" autoconfigure="true" abstract="true"/>
     <service id=".service_locator.WaGDpDt" class="Symfony\Component\DependencyInjection\ServiceLocator" public="false">
       <tag name="container.service_locator"/>
       <argument type="collection">
@@ -1654,26 +1766,36 @@
         <argument key="logger" type="service" id="monolog.logger"/>
       </argument>
     </service>
-    <service id=".service_locator.kYHUBWj" class="Symfony\Component\DependencyInjection\ServiceLocator" public="false">
+    <service id=".service_locator.hhi6i07" class="Symfony\Component\DependencyInjection\ServiceLocator" public="false">
       <tag name="container.service_locator"/>
       <argument type="collection">
+        <argument key="httpClient" type="service" id="app.http.client"/>
         <argument key="ipApi" type="service" id="App\Model\IpApiProvider"/>
       </argument>
     </service>
-    <service id=".service_locator.jB4gYzr" class="Symfony\Component\DependencyInjection\ServiceLocator" public="false">
+    <service id=".service_locator.uwP1Wnc" class="Symfony\Component\DependencyInjection\ServiceLocator" public="false">
       <tag name="container.service_locator"/>
       <argument type="collection">
-        <argument key="App\Controller\DefaultController::index" type="service" id=".service_locator.kYHUBWj"/>
+        <argument key="App\Controller\DefaultController::index" type="service" id=".service_locator.hhi6i07"/>
         <argument key="App\Kernel::loadRoutes" type="service" id=".service_locator.C9JCBPC"/>
         <argument key="App\Kernel::registerContainerConfiguration" type="service" id=".service_locator.C9JCBPC"/>
         <argument key="App\Kernel::terminate" type="service" id=".service_locator.beq5mCo"/>
         <argument key="kernel::loadRoutes" type="service" id=".service_locator.C9JCBPC"/>
         <argument key="kernel::registerContainerConfiguration" type="service" id=".service_locator.C9JCBPC"/>
         <argument key="kernel::terminate" type="service" id=".service_locator.beq5mCo"/>
-        <argument key="App\Controller\DefaultController:index" type="service" id=".service_locator.kYHUBWj"/>
+        <argument key="App\Controller\DefaultController:index" type="service" id=".service_locator.hhi6i07"/>
         <argument key="kernel:loadRoutes" type="service" id=".service_locator.C9JCBPC"/>
         <argument key="kernel:registerContainerConfiguration" type="service" id=".service_locator.C9JCBPC"/>
         <argument key="kernel:terminate" type="service" id=".service_locator.beq5mCo"/>
+      </argument>
+    </service>
+    <service id=".service_locator.I1s6iy_" class="Symfony\Component\DependencyInjection\ServiceLocator" public="false">
+      <tag name="container.service_locator"/>
+      <argument type="collection">
+        <argument key="Symfony\Component\Validator\Constraints\EmailValidator" type="service" id="validator.email"/>
+        <argument key="Symfony\Component\Validator\Constraints\ExpressionValidator" type="service" id="validator.expression"/>
+        <argument key="Symfony\Component\Validator\Constraints\NotCompromisedPasswordValidator" type="service" id="validator.not_compromised_password"/>
+        <argument key="validator.expression" type="service" id="validator.expression"/>
       </argument>
     </service>
     <service id=".service_locator.Vt79qxb" class="Symfony\Component\DependencyInjection\ServiceLocator" public="false">
@@ -1684,6 +1806,15 @@
     </service>
     <service id="monolog.logger.request" class="Symfony\Bridge\Monolog\Logger">
       <argument>request</argument>
+      <call method="pushProcessor">
+        <argument type="service" id="Monolog\Processor\PsrLogMessageProcessor"/>
+      </call>
+      <call method="pushProcessor">
+        <argument type="service" id="Monolog\Processor\WebProcessor"/>
+      </call>
+      <call method="pushProcessor">
+        <argument type="service" id="Monolog\Processor\MemoryUsageProcessor"/>
+      </call>
       <call method="pushHandler">
         <argument type="service" id="monolog.handler.console"/>
       </call>
@@ -1693,12 +1824,30 @@
     </service>
     <service id="monolog.logger.console" class="Symfony\Bridge\Monolog\Logger">
       <argument>console</argument>
+      <call method="pushProcessor">
+        <argument type="service" id="Monolog\Processor\PsrLogMessageProcessor"/>
+      </call>
+      <call method="pushProcessor">
+        <argument type="service" id="Monolog\Processor\WebProcessor"/>
+      </call>
+      <call method="pushProcessor">
+        <argument type="service" id="Monolog\Processor\MemoryUsageProcessor"/>
+      </call>
       <call method="pushHandler">
         <argument type="service" id="monolog.handler.main"/>
       </call>
     </service>
     <service id="monolog.logger.cache" class="Symfony\Bridge\Monolog\Logger">
       <argument>cache</argument>
+      <call method="pushProcessor">
+        <argument type="service" id="Monolog\Processor\PsrLogMessageProcessor"/>
+      </call>
+      <call method="pushProcessor">
+        <argument type="service" id="Monolog\Processor\WebProcessor"/>
+      </call>
+      <call method="pushProcessor">
+        <argument type="service" id="Monolog\Processor\MemoryUsageProcessor"/>
+      </call>
       <call method="pushHandler">
         <argument type="service" id="monolog.handler.console"/>
       </call>
@@ -1708,6 +1857,15 @@
     </service>
     <service id="monolog.logger.php" class="Symfony\Bridge\Monolog\Logger">
       <argument>php</argument>
+      <call method="pushProcessor">
+        <argument type="service" id="Monolog\Processor\PsrLogMessageProcessor"/>
+      </call>
+      <call method="pushProcessor">
+        <argument type="service" id="Monolog\Processor\WebProcessor"/>
+      </call>
+      <call method="pushProcessor">
+        <argument type="service" id="Monolog\Processor\MemoryUsageProcessor"/>
+      </call>
       <call method="pushHandler">
         <argument type="service" id="monolog.handler.console"/>
       </call>
@@ -1717,6 +1875,15 @@
     </service>
     <service id="monolog.logger.router" class="Symfony\Bridge\Monolog\Logger">
       <argument>router</argument>
+      <call method="pushProcessor">
+        <argument type="service" id="Monolog\Processor\PsrLogMessageProcessor"/>
+      </call>
+      <call method="pushProcessor">
+        <argument type="service" id="Monolog\Processor\WebProcessor"/>
+      </call>
+      <call method="pushProcessor">
+        <argument type="service" id="Monolog\Processor\MemoryUsageProcessor"/>
+      </call>
       <call method="pushHandler">
         <argument type="service" id="monolog.handler.console"/>
       </call>
@@ -1897,6 +2064,7 @@
       <deprecated package="symfony/dependency-injection" version="5.1">The "%alias_id%" autowiring alias is deprecated. Define it explicitly in your app if you want to keep using it.</deprecated>
     </service>
     <service id="App\Contract\IpProviderModelInterface" alias="App\Model\IpApiProvider" public="false"/>
+    <service id="Psr\Http\Client\ClientInterface" alias="app.http.client" public="false"/>
     <service id="App\Kernel" alias="kernel" public="true"/>
     <service id="Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface" alias="parameter_bag" public="false"/>
     <service id="Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface" alias="parameter_bag" public="false"/>
@@ -1928,6 +2096,8 @@
     <service id="Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface" alias="session.flash_bag" public="false"/>
     <service id="session.storage.filesystem" alias="session.storage.mock_file" public="false"/>
     <service id="session.storage" alias="session.storage.native"/>
+    <service id="Symfony\Component\Validator\Validator\ValidatorInterface" alias="validator" public="false"/>
+    <service id="validator.mapping.class_metadata_factory" alias="validator" public="false"/>
     <service id="Symfony\Component\HttpKernel\Debug\FileLinkFormatter" alias="debug.file_link_formatter" public="false"/>
     <service id="router" alias="router.default" public="true"/>
     <service id="Symfony\Component\Routing\RouterInterface" alias="router.default" public="false"/>
@@ -1940,7 +2110,7 @@
     <service id="logger" alias="monolog.logger"/>
     <service id="Psr\Log\LoggerInterface" alias="monolog.logger" public="false"/>
     <service id="container.env_var_processors_locator" alias=".service_locator.WaGDpDt" public="true"/>
-    <service id="argument_resolver.controller_locator" alias=".service_locator.jB4gYzr"/>
+    <service id="argument_resolver.controller_locator" alias=".service_locator.uwP1Wnc"/>
     <service id="Psr\Log\LoggerInterface $requestLogger" alias="monolog.logger.request"/>
     <service id="Psr\Log\LoggerInterface $consoleLogger" alias="monolog.logger.console"/>
     <service id="Psr\Log\LoggerInterface $cacheLogger" alias="monolog.logger.cache"/>

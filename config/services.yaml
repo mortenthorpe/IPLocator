@@ -42,5 +42,23 @@ services:
       factory: ['App\Model\Factory\IpApiProviderFactory', 'create']
       arguments: ['%ip_api%']
 
+    app.http.client:
+      class: GuzzleHttp\Client
+
+    Psr\Http\Client\ClientInterface: '@app.http.client'
+
+    #Monolog $context-array token replacer PSR-processor
+    Monolog\Processor\PsrLogMessageProcessor:
+      tags:
+        - { name: monolog.processor }
+
+    Monolog\Processor\WebProcessor:
+      tags:
+        - { name: monolog.processor }
+
+    Monolog\Processor\MemoryUsageProcessor:
+      tags:
+        - { name: monolog.processor }
+
   #  app.provider.user.ip:
   #    calls:  []
