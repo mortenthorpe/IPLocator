@@ -10,7 +10,11 @@ Provided with a IPV4 IP-address, this service will respond with at minimum, the 
 Using a terminal application...
 
 - `CD` to root directory of this project - the same as the location of the outermost occurence of the file `composer.json`
+- Copy file `.env.dist` to `.env`
 - run command 'composer install'
+
+The installer will install all composer dependencies, while resulting in a failure to run the symfony console, don´t worry- this is for now normal behavior, and the service works as inteded.
+
 
 ## Usage ##
 The service can in development be run in the serverless PHP-mode, e.g. started as a process oín a terminal:
