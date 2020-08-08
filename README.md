@@ -40,5 +40,5 @@ Make sure to observe the logfiles in development, kept in `./var/log` directory 
 - Emit JSON-response on default controller - more broadly, emit a response-type matching that of the client - first candidates are JSON and HTML (plain text).
 - Properly handle localhost/non-locatable (non-public) IP addresses to return meaningful responses, and with exceptions in a sensible manner
 - Provide a more flexible default IP-address for primarily testing, as prepared in services.yaml of the main project (`src/config/services.yaml`)
-- Include PHP code-beautifier and codesniffer level tests in git-commit scenario, so commits are only possible when PHP code is well-formed, and adhere's to PSR-12 guidelines
+- Include PHP code-beautifier and codesniffer level tests in git-commit scenario, so commits are only possible when PHP code is well-formed, and adheres to PSR-12 guidelines
 
