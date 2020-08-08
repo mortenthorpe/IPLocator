@@ -3,7 +3,10 @@
 .DS_Store
 .env
 vendor
-bin
-bin/*
 var
 var/*
+
+###> squizlabs/php_codesniffer ###
+/.phpcs-cache
+/phpcs.xml
+###< squizlabs/php_codesniffer ###
