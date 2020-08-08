@@ -1,4 +1,4 @@
-#IPLocator Service#
+# IPLocator Service #
 ## Introduction ##
 Provided with a IPV4 IP-address, this service will respond with at minimum, the *country-code* corresponding to that IP-address. The service relies on a number of external providers of IP-address-to-location mapping. The current default servide is free of charge, others will incur cost, at the conditions set by those providers.
 
