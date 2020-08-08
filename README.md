@@ -25,9 +25,12 @@ E.g.: [Default localhost on port 80] (http://localhost?ip=127.0.0.1)
 
 Omitting the optional `ip` argument in the HTTP call, will default to the IP as publically broadcast by the client issuing the call to this service.
 
-A successful response from the service, will be a full JSON HTTP response, including at minimum the country-code for the IP-address as sent in the request.
+A successful response from the service, will be a full JSON HTTP response, including at minimum the country-code for the IP-address as sent in the request:
+
+- `{"status":"success","countryCode":"DK", "query":"IP_ADDRESS_REQUESTED"}`
 
 A failed response (invalid IP-address sent as request), will at minimum have this JSON data:
+
 - `{"status":"fail", "query":"IP_ADDRESS_REQUESTED"}`
 
 ## Development logging ##
