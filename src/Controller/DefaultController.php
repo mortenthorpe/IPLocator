@@ -33,6 +33,8 @@ class DefaultController extends AbstractController
      */
     public function index(Request $request, IpProviderModelInterface $ipApi, ClientInterface $httpClient)
     {
+        // Initialize $apiResponseDataAssoc with data corresponding to JSON response on failure.
+        $apiResponseDataAssoc = ["status" => "fail", "query" => "127.0.0.1"];
         $apiUrl = $ipApi->getApiUrl();
         $reqGetClientIp = $request->get('ip', '');
         // Let the GET-parameter 'ip' determine a manually set clientIP address, fallback to the request client IP.
@@ -42,16 +44,16 @@ class DefaultController extends AbstractController
          * @var ResponseInterface $apiResponse
          */
         $apiResponse = $httpClient->request(Request::METHOD_GET, $apiUrlString);
-        if($this->HttpResponseSuccess($apiResponse, Request::METHOD_GET)) {
-        $apiResponseData = $apiResponse->getBody()->getContents();
-        $this->logger->info($apiResponseData);
-        $apiResponseDataAssoc = unserialize($apiResponseData);
-        try {
-            $clientCountryCode = $apiResponseDataAssoc['countryCode'];
-        } catch (\ErrorException $e) {
-            $this->logger->notice('The IP-address \'{ip}\' is not resolvable to a location', ['ip' => $clientIp]);
+        if ($this->HttpResponseSuccess($apiResponse, Request::METHOD_GET)) {
+            $apiResponseData = $apiResponse->getBody()->getContents();
+            $this->logger->info($apiResponseData);
+            $apiResponseDataAssoc = unserialize($apiResponseData);
+            try {
+                $clientCountryCode = $apiResponseDataAssoc['countryCode'];
+            } catch (\ErrorException $e) {
+                $this->logger->notice('The IP-address \'{ip}\' is not resolvable to a location', ['ip' => $clientIp]);
+            }
         }
-	}
 
         return new JsonResponse($apiResponseDataAssoc);
     }
