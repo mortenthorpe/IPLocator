@@ -3,7 +3,7 @@
 Provided with a IPV4 IP-address, this service will respond with at minimum, the *country-code* corresponding to that IP-address. The service relies on a number of external providers of IP-address-to-location mapping. The current default servide is free of charge, others will incur cost, at the conditions set by those providers.
 
 ## Requirements ##
-- See version 5.1 of [Symfony requirements](https://symfony.com/doc/current/setup.html)
+- See version 5.3 of [Symfony requirements](https://symfony.com/doc/current/setup.html)
 - A local installation of composer commandline util - See [composer online](https://getcomposer.org)
 
 ## Installation - Using Composer ##
